@@ -78,12 +78,20 @@ class GameScene extends Phaser.Scene {
     this.timedEvent = this.time.delayedCall(3000, this.gameOver, [], this);
 
     //Emitter...coin
-    const emitter = this.add.particles(100, 300, "money", {
-      frame: "red",
-      angle: { min: -30, max: 30 },
-      speed: 150,
+    this.emitter = this.add.particles(0, 0, "money", {
+      speed: 100,
+      gravityY: speedDown - 200,
       scale: 0.04,
+      duration: 100,
+      emitting: false,
     });
+
+    this.emitter.startFollow(
+      this.player,
+      this.player.width / 2,
+      this.player.height / 2,
+      true
+    );
     //Add Music
     this.coinMusic = this.sound.add("coin");
     this.bgMusic = this.sound.add("bgMusic");
@@ -124,9 +132,9 @@ class GameScene extends Phaser.Scene {
 
   targetHit() {
     this.coinMusic.play();
+    this.emitter.start();
     this.target.setY(0);
     this.target.setX(this.getRandomX());
-    this.emitter.start();
     this.points++;
     this.textScore.setText(`Score: ${this.points}`);
   }
