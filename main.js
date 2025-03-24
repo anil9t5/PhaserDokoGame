@@ -1,3 +1,4 @@
+import "./style.css";
 import Phaser from "phaser";
 
 const sizes = { width: 500, height: 500 };
@@ -15,11 +16,12 @@ class GameScene extends Phaser.Scene {
     this.textScore;
     this.textTime;
     this.timedEvent;
-    this.remainingTime;
+    // this.remainingTime;
     this.coinMusic;
     this.bgMusic;
     this.emitter;
     this.particles;
+    this.gameOverMessage;
   }
 
   //Preload function logic
@@ -70,10 +72,20 @@ class GameScene extends Phaser.Scene {
       fill: "#000000",
     });
 
-    this.textTime = this.add.text(10, 10, "Remaining Time: 00", {
-      font: "25px Arial",
-      fill: "#000000",
-    });
+    this.gameOverMessage = this.add.text(
+      sizes.width - 120,
+      40,
+      "Game Over: 0",
+      {
+        font: "32px Arial",
+        fill: "#000000",
+      }
+    );
+
+    // this.textTime = this.add.text(10, 10, "Remaining Time: 00", {
+    //   font: "25px Arial",
+    //   fill: "#000000",
+    // });
 
     this.timedEvent = this.time.delayedCall(3000, this.gameOver, [], this);
 
@@ -113,10 +125,11 @@ class GameScene extends Phaser.Scene {
       this.player.setVelocityX(0);
     }
 
-    this.remainingTime = this.timedEvent.getRemainingSeconds();
-    this.textTime.setText(
-      `Remaining Time: ${Math.round(this.remainingTime).toString()}`
-    );
+    // this.remainingTime = this.timedEvent.getRemainingSeconds();
+    // this.textTime.setText(
+    //   `Remaining Time: ${Math.round(this.remainingTime).toString()}`
+    // );
+    this.gameOver();
   }
 
   getRandomX() {
@@ -127,6 +140,8 @@ class GameScene extends Phaser.Scene {
     if (this.target.y >= sizes.height) {
       this.target.setY(0);
       this.target.setX(this.getRandomX());
+      this.points -= 5;
+      this.textScore.setText(`Score: ${this.points}`);
     }
   }
 
@@ -140,7 +155,10 @@ class GameScene extends Phaser.Scene {
   }
 
   gameOver() {
-    console.log();
+    this.sys.game.destroy(true);
+    if (this.points >= 10) {
+      this.gameOverMessage.textC;
+    }
   }
 }
 
