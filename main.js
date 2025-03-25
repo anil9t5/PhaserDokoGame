@@ -5,6 +5,12 @@ const sizes = { width: 500, height: 500 };
 
 const speedDown = 300;
 
+const gameStartDiv = document.querySelector("#gameStartDiv");
+const gameStartBtn = document.querySelector("#gameStartBtn");
+const gameEndDiv = document.querySelector("#gameEndDiv");
+const gameWinLoseSpan = document.querySelector("#gameWinLoseSpan");
+const gameEndScoreSpan = document.querySelector("#gameEndScoreSpan");
+
 class GameScene extends Phaser.Scene {
   constructor() {
     super("scene-game");
@@ -16,7 +22,7 @@ class GameScene extends Phaser.Scene {
     this.textScore;
     this.textTime;
     this.timedEvent;
-    // this.remainingTime;
+    this.remainingTime;
     this.coinMusic;
     this.bgMusic;
     this.emitter;
@@ -36,6 +42,8 @@ class GameScene extends Phaser.Scene {
 
   //Create function logic
   create() {
+    
+    this.scene.pause("scene-game");
     this.add.image(0, 0, "bg").setOrigin(0, 0);
 
     this.player = this.physics.add
@@ -72,20 +80,12 @@ class GameScene extends Phaser.Scene {
       fill: "#000000",
     });
 
-    this.gameOverMessage = this.add.text(
-      sizes.width - 120,
-      40,
-      "Game Over: 0",
-      {
-        font: "32px Arial",
-        fill: "#000000",
-      }
-    );
 
-    // this.textTime = this.add.text(10, 10, "Remaining Time: 00", {
-    //   font: "25px Arial",
-    //   fill: "#000000",
-    // });
+
+    this.textTime = this.add.text(10, 10, "Remaining Time: 00", {
+      font: "25px Arial",
+      fill: "#000000",
+    });
 
     this.timedEvent = this.time.delayedCall(3000, this.gameOver, [], this);
 
@@ -109,6 +109,7 @@ class GameScene extends Phaser.Scene {
     this.bgMusic = this.sound.add("bgMusic");
     this.bgMusic.play();
     this.bgMusic.stop();
+    
   }
 
   //Update function logic
@@ -125,11 +126,10 @@ class GameScene extends Phaser.Scene {
       this.player.setVelocityX(0);
     }
 
-    // this.remainingTime = this.timedEvent.getRemainingSeconds();
-    // this.textTime.setText(
-    //   `Remaining Time: ${Math.round(this.remainingTime).toString()}`
-    // );
-    this.gameOver();
+    this.remainingTime = this.timedEvent.getRemainingSeconds();
+    this.textTime.setText(
+      `Remaining Time: ${Math.round(this.remainingTime).toString()}`
+    );
   }
 
   getRandomX() {
@@ -157,15 +157,21 @@ class GameScene extends Phaser.Scene {
   gameOver() {
     this.sys.game.destroy(true);
     if (this.points >= 10) {
-      this.gameOverMessage.textC;
+      gameEndScoreSpan.textContent = this.points;
+      gameWinLoseSpan.textContent = "Win! ";
+    }else {
+      gameEndScoreSpan.textContent = this.points;
+      gameWinLoseSpan.textContent = "Lose! ";
     }
+    gameEndDiv.style.display = "flex";
   }
 }
 
 const config = {
-  type: Phaser.AUTO,
+  type: Phaser.WEBGL,
   width: sizes.width,
   height: sizes.height,
+  canvas: gameCanvas,
   physics: {
     default: "arcade",
     arcade: {
@@ -179,3 +185,10 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+gameStartBtn.addEventListener("click", ()=> {
+  gameStartDiv.style.display = "none";
+  game.scene.resume("scene-game");
+})
+
+
