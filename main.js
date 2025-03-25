@@ -22,7 +22,7 @@ class GameScene extends Phaser.Scene {
     this.textScore;
     this.textTime;
     this.timedEvent;
-    this.remainingTime;
+    this.remainingTime = 15;
     this.coinMusic;
     this.bgMusic;
     this.emitter;
@@ -30,7 +30,6 @@ class GameScene extends Phaser.Scene {
     this.gameOverMessage;
   }
 
-  //Preload function logic
   preload() {
     this.load.image("bg", "public/assets/bg.png");
     this.load.image("basket", "public/assets/basket.png");
@@ -40,7 +39,6 @@ class GameScene extends Phaser.Scene {
     this.load.audio("bgMusic", "public/assets/bgMusic.mp3");
   }
 
-  //Create function logic
   create() {
     this.scene.pause("scene-game");
     this.add.image(0, 0, "bg").setOrigin(0, 0);
@@ -51,7 +49,6 @@ class GameScene extends Phaser.Scene {
     this.player.setImmovable(true);
     this.player.body.allowGravity = false;
     this.player.setCollideWorldBounds(true);
-    // this.player.setSize(80, 15).setOffset(10, 70);
     this.player
       .setSize(
         this.player.width - this.player.width / 4,
@@ -69,7 +66,7 @@ class GameScene extends Phaser.Scene {
       this.player,
       this.targetHit,
       null,
-      this //context
+      this
     );
 
     this.cursor = this.input.keyboard.createCursorKeys();
@@ -79,14 +76,23 @@ class GameScene extends Phaser.Scene {
       fill: "#000000",
     });
 
-    this.textTime = this.add.text(10, 10, "Remaining Time: 00", {
-      font: "25px Arial",
-      fill: "#000000",
-    });
+    this.textTime = this.add.text(
+      10,
+      10,
+      `Remaining Time: ${this.remainingTime}`,
+      {
+        font: "25px Arial",
+        fill: "#000000",
+      }
+    );
 
-    this.timedEvent = this.time.delayedCall(15000, this.gameOver, [], this);
+    this.timedEvent = this.time.delayedCall(
+      this.remainingTime * 1000,
+      this.gameOver,
+      [],
+      this
+    );
 
-    //Emitter...coin
     this.emitter = this.add.particles(0, 0, "money", {
       speed: 100,
       gravityY: speedDown - 200,
@@ -101,17 +107,14 @@ class GameScene extends Phaser.Scene {
       this.player.height / 2,
       true
     );
-    //Add Music
     this.coinMusic = this.sound.add("coin");
     this.bgMusic = this.sound.add("bgMusic");
     this.bgMusic.play();
     this.bgMusic.stop();
   }
 
-  //Update function logic
   update() {
     const { left, right } = this.cursor;
-
     this.targetFallsOffScreen();
 
     if (left.isDown) {
@@ -122,10 +125,8 @@ class GameScene extends Phaser.Scene {
       this.player.setVelocityX(0);
     }
 
-    this.remainingTime = this.timedEvent.getRemainingSeconds();
-    this.textTime.setText(
-      `Remaining Time: ${Math.round(this.remainingTime).toString()}`
-    );
+    this.remainingTime = Math.max(0, this.timedEvent.getRemainingSeconds());
+    this.textTime.setText(`Remaining Time: ${Math.round(this.remainingTime)}`);
   }
 
   getRandomX() {
@@ -136,12 +137,10 @@ class GameScene extends Phaser.Scene {
     if (this.target.y >= sizes.height) {
       this.target.setY(0);
       this.target.setX(this.getRandomX());
-      while (this.points > 0) {
-        this.points -= 2;
-      }
+      this.points = Math.max(0, this.points - 2);
       this.textScore.setText(`Score: ${this.points}`);
-      if (this.points <= 0) {
-        console.log(this.points);
+
+      if (this.points === 0) {
         this.gameOver();
       }
     }
@@ -154,6 +153,20 @@ class GameScene extends Phaser.Scene {
     this.target.setX(this.getRandomX());
     this.points++;
     this.textScore.setText(`Score: ${this.points}`);
+
+    if (this.points % 10 === 0) {
+      this.remainingTime += 5;
+      this.textTime.setText(
+        `Remaining Time: ${Math.round(this.remainingTime)}`
+      );
+      this.timedEvent.remove();
+      this.timedEvent = this.time.delayedCall(
+        this.remainingTime * 1000,
+        this.gameOver,
+        [],
+        this
+      );
+    }
   }
 
   gameOver() {
@@ -161,7 +174,6 @@ class GameScene extends Phaser.Scene {
     this.sys.game.destroy(true);
     if (this.points >= 10) {
       gameEndScoreSpan.textContent = this.points;
-      this.remainingTime += 5;
       gameWinLoseSpan.textContent = "Win! ";
     } else {
       gameEndScoreSpan.textContent = this.points;
