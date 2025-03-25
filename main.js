@@ -42,7 +42,6 @@ class GameScene extends Phaser.Scene {
 
   //Create function logic
   create() {
-    
     this.scene.pause("scene-game");
     this.add.image(0, 0, "bg").setOrigin(0, 0);
 
@@ -80,14 +79,12 @@ class GameScene extends Phaser.Scene {
       fill: "#000000",
     });
 
-
-
     this.textTime = this.add.text(10, 10, "Remaining Time: 00", {
       font: "25px Arial",
       fill: "#000000",
     });
 
-    this.timedEvent = this.time.delayedCall(3000, this.gameOver, [], this);
+    this.timedEvent = this.time.delayedCall(15000, this.gameOver, [], this);
 
     //Emitter...coin
     this.emitter = this.add.particles(0, 0, "money", {
@@ -109,7 +106,6 @@ class GameScene extends Phaser.Scene {
     this.bgMusic = this.sound.add("bgMusic");
     this.bgMusic.play();
     this.bgMusic.stop();
-    
   }
 
   //Update function logic
@@ -140,8 +136,14 @@ class GameScene extends Phaser.Scene {
     if (this.target.y >= sizes.height) {
       this.target.setY(0);
       this.target.setX(this.getRandomX());
-      this.points -= 5;
+      while (this.points > 0) {
+        this.points -= 2;
+      }
       this.textScore.setText(`Score: ${this.points}`);
+      if (this.points <= 0) {
+        console.log(this.points);
+        this.gameOver();
+      }
     }
   }
 
@@ -155,11 +157,13 @@ class GameScene extends Phaser.Scene {
   }
 
   gameOver() {
+    console.log("Calling...");
     this.sys.game.destroy(true);
     if (this.points >= 10) {
       gameEndScoreSpan.textContent = this.points;
+      this.remainingTime += 5;
       gameWinLoseSpan.textContent = "Win! ";
-    }else {
+    } else {
       gameEndScoreSpan.textContent = this.points;
       gameWinLoseSpan.textContent = "Lose! ";
     }
@@ -186,9 +190,7 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-gameStartBtn.addEventListener("click", ()=> {
+gameStartBtn.addEventListener("click", () => {
   gameStartDiv.style.display = "none";
   game.scene.resume("scene-game");
-})
-
-
+});
