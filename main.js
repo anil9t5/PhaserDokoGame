@@ -1,7 +1,7 @@
 import "./style.css";
 import Phaser from "phaser";
 
-const sizes = { width: 500, height: 500 };
+const sizes = { width: 800, height: 500 };
 
 const speedDown = 300;
 
@@ -32,9 +32,9 @@ class GameScene extends Phaser.Scene {
 
   //Preload function logic
   preload() {
-    this.load.image("bg", "public/assets/bg.png");
+    this.load.image("bg", "public/assets/PhaseDokeBG.png");
     this.load.image("basket", "public/assets/basket.png");
-    this.load.image("apple", "public/assets/apple.png");
+    this.load.image("apple", "public/assets/orange.png");
     this.load.image("money", "public/assets/money.png");
     this.load.audio("coin", "public/assets/coin.mp3");
     this.load.audio("bgMusic", "public/assets/bgMusic.mp3");
@@ -76,12 +76,12 @@ class GameScene extends Phaser.Scene {
 
     this.textScore = this.add.text(sizes.width - 120, 10, "Score: 0", {
       font: "25px Arial",
-      fill: "#000000",
+      fill: "#ffffff",
     });
 
     this.textTime = this.add.text(10, 10, "Remaining Time: 00", {
       font: "25px Arial",
-      fill: "#000000",
+      fill: "#ffffff",
     });
 
     this.timedEvent = this.time.delayedCall(15000, this.gameOver, [], this);
@@ -105,7 +105,7 @@ class GameScene extends Phaser.Scene {
     this.coinMusic = this.sound.add("coin");
     this.bgMusic = this.sound.add("bgMusic");
     this.bgMusic.play();
-    this.bgMusic.stop();
+    // this.bgMusic.stop();
   }
 
   //Update function logic
