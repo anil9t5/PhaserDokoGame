@@ -1,8 +1,8 @@
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  --dkClr: #181818;
+  --dkClr: #386641;
   --liClr: whitesmoke;
-  --accClr: #0d0d35;
+  --accClr: #6a994e;
 }
 
 * {
@@ -22,6 +22,9 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  font-family: "Chewy", system-ui;
+  font-weight: 400;
+  font-style: normal;
 }
 
 header,
@@ -38,13 +41,11 @@ main {
 }
 
 #gameCanvas {
-  border: 1px solid red;
+  border: 6px solid #222222;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  display: flex;
-  z-index: 1;
 }
 
 .gameUI {

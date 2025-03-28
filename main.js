@@ -1,7 +1,7 @@
 import "./style.css";
 import Phaser from "phaser";
 
-const sizes = { width: 800, height: 500 };
+const sizes = { width: 1200, height: 758 };
 
 const speedDown = 300;
 
@@ -32,12 +32,12 @@ class GameScene extends Phaser.Scene {
 
   //Preload function logic
   preload() {
-    this.load.image("bg", "public/assets/PhaseDokeBG.png");
+    this.load.image("bg", "public/assets/PhaseDokeBG-V2.png");
     this.load.image("basket", "public/assets/basket.png");
     this.load.image("apple", "public/assets/orange.png");
     this.load.image("money", "public/assets/money.png");
     this.load.audio("coin", "public/assets/coin.mp3");
-    this.load.audio("bgMusic", "public/assets/bgMusic.mp3");
+    this.load.audio("bgMusic", "public/assets/bg_music.mp3");
   }
 
   //Create function logic
@@ -75,12 +75,12 @@ class GameScene extends Phaser.Scene {
     this.cursor = this.input.keyboard.createCursorKeys();
 
     this.textScore = this.add.text(sizes.width - 120, 10, "Score: 0", {
-      font: "25px Arial",
+      font: "25px Chewy",
       fill: "#ffffff",
     });
 
     this.textTime = this.add.text(10, 10, "Remaining Time: 00", {
-      font: "25px Arial",
+      font: "25px Chewy",
       fill: "#ffffff",
     });
 
@@ -155,7 +155,6 @@ class GameScene extends Phaser.Scene {
   }
 
   gameOver() {
-    console.log("Calling...");
     this.sys.game.destroy(true);
     if (this.points >= 10) {
       gameEndScoreSpan.textContent = this.points;
@@ -171,8 +170,8 @@ class GameScene extends Phaser.Scene {
 
 const config = {
   type: Phaser.WEBGL,
-  width: sizes.width,
-  height: sizes.height,
+  width: sizes.width, // Initial width
+  height: sizes.height, // Initial height
   canvas: gameCanvas,
   physics: {
     default: "arcade",
@@ -180,7 +179,11 @@ const config = {
       gravity: {
         y: speedDown,
       },
-      debug: true,
+      // debug: true,
+    },
+    scale: {
+      mode: Phaser.Scale.RESIZE, // Makes the canvas responsive
+      autoCenter: Phaser.Scale.CENTER_BOTH,
     },
   },
   scene: [GameScene],
