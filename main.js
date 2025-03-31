@@ -29,8 +29,6 @@ class GameScene extends Phaser.Scene {
     this.remainingTime;
     this.coinMusic;
     this.bgMusic;
-    this.emitter;
-    this.target;
   }
 
   preload() {
@@ -39,7 +37,6 @@ class GameScene extends Phaser.Scene {
     this.load.image("apple", "public/assets/orange.png");
     this.load.image("goldenApple", "public/assets/golden_orange.png");
     this.load.image("rottenApple", "public/assets/rotten_orange.png");
-    this.load.image("money", "public/assets/money.png");
     this.load.audio("coin", "public/assets/coin.mp3");
     this.load.audio("bgMusic", "public/assets/bg_music.mp3");
   }
@@ -54,15 +51,6 @@ class GameScene extends Phaser.Scene {
     this.player.setImmovable(true);
     this.player.body.allowGravity = false;
     this.player.setCollideWorldBounds(true);
-    this.player
-      .setSize(
-        this.player.width - this.player.width / 4,
-        this.player.height / 6
-      )
-      .setOffset(
-        this.player.width / 8,
-        this.player.height - this.player.height / 8
-      );
 
     this.spawnTarget();
 
@@ -77,22 +65,8 @@ class GameScene extends Phaser.Scene {
       fill: "#ffffff",
     });
 
-    this.timedEvent = this.time.delayedCall(60000, this.gameOver, [], this);
+    this.timedEvent = this.time.delayedCall(30000, this.gameOver, [], this);
 
-    this.emitter = this.add.particles(0, 0, "money", {
-      speed: 100,
-      gravityY: speedDown - 200,
-      scale: 0.04,
-      duration: 100,
-      emitting: false,
-    });
-
-    this.emitter.startFollow(
-      this.player,
-      this.player.width / 2,
-      this.player.height / 2,
-      true
-    );
     this.coinMusic = this.sound.add("coin");
     this.bgMusic = this.sound.add("bgMusic");
     this.bgMusic.play();
@@ -148,29 +122,30 @@ class GameScene extends Phaser.Scene {
 
   targetFallsOffScreen() {
     if (this.target.y >= sizes.height) {
-      this.target.destroy(); // Remove the target from the screen
-      this.points = Math.max(0, this.points - 1); // Deduct 1 point if the orange falls offscreen
+      this.points = Math.max(0, this.points - 1);
       this.textScore.setText(`Score: ${this.points}`);
+      this.showScorePopup(-1);
 
-      // If score reaches 0, end the game
       if (this.points === 0) {
         this.gameOver();
-      } else {
-        this.spawnTarget(); // Spawn a new target after one falls off the screen
       }
+
+      this.target.destroy();
+      this.spawnTarget();
     }
   }
 
   targetHit(target) {
     this.coinMusic.play();
-    this.emitter.start();
+
+    if (target.texture.key === "goldenApple") {
+      this.timedEvent.delay += timeBoost * 1000;
+    }
+
     this.points += target.scoreChange;
     this.points = Math.max(0, this.points);
     this.textScore.setText(`Score: ${this.points}`);
-
-    if (target.texture.key === "goldenApple") {
-      this.remainingTime += timeBoost;
-    }
+    this.showScorePopup(target.scoreChange);
 
     if (this.points % levelUpInterval === 0) {
       this.targetSpeed += speedIncreaseRate;
@@ -178,6 +153,26 @@ class GameScene extends Phaser.Scene {
 
     target.destroy();
     this.spawnTarget();
+  }
+
+  showScorePopup(scoreChange) {
+    const color = scoreChange > 0 ? "#00ff00" : "#ff0000";
+    const text = this.add.text(
+      this.player.x + 30,
+      this.player.y - 20,
+      `${scoreChange > 0 ? "+" : ""}${scoreChange}`,
+      {
+        font: "25px Chewy",
+        fill: color,
+      }
+    );
+    this.tweens.add({
+      targets: text,
+      y: text.y - 50,
+      alpha: 0,
+      duration: 1000,
+      onComplete: () => text.destroy(),
+    });
   }
 
   gameOver() {
