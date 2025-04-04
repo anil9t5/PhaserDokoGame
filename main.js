@@ -14,6 +14,7 @@ const gameStartBtn = document.querySelector("#gameStartBtn");
 const gameEndDiv = document.querySelector("#gameEndDiv");
 const gameWinLoseSpan = document.querySelector("#gameWinLoseSpan");
 const gameEndScoreSpan = document.querySelector("#gameEndScoreSpan");
+const gameCanvas = document.querySelector("#gameCanvas");
 
 class GameScene extends Phaser.Scene {
   constructor() {
@@ -29,14 +30,15 @@ class GameScene extends Phaser.Scene {
     this.remainingTime;
     this.coinMusic;
     this.bgMusic;
+    this.targets = [];
   }
 
   preload() {
     this.load.image("bg", "public/assets/PhaseDokeBG-V2.png");
     this.load.image("basket", "public/assets/basket.png");
-    this.load.image("apple", "public/assets/orange.png");
-    this.load.image("goldenApple", "public/assets/golden_orange.png");
-    this.load.image("rottenApple", "public/assets/rotten_orange.png");
+    this.load.image("orange", "public/assets/orange.png");
+    this.load.image("goldenOrange", "public/assets/golden_orange.png");
+    this.load.image("rottenOrange", "public/assets/rotten_orange.png");
     this.load.audio("coin", "public/assets/coin.mp3");
     this.load.audio("bgMusic", "public/assets/bg_music.mp3");
   }
@@ -46,13 +48,11 @@ class GameScene extends Phaser.Scene {
     this.add.image(0, 0, "bg").setOrigin(0, 0);
 
     this.player = this.physics.add
-      .image(0, sizes.height - 100, "basket")
-      .setOrigin(0, 0);
+      .image(sizes.width / 2, sizes.height - 100, "basket")
+      .setOrigin(0.5, 0);
     this.player.setImmovable(true);
     this.player.body.allowGravity = false;
     this.player.setCollideWorldBounds(true);
-
-    this.spawnTarget();
 
     this.cursor = this.input.keyboard.createCursorKeys();
 
@@ -70,6 +70,8 @@ class GameScene extends Phaser.Scene {
     this.coinMusic = this.sound.add("coin");
     this.bgMusic = this.sound.add("bgMusic");
     this.bgMusic.play();
+
+    this.spawnTarget();
   }
 
   update() {
@@ -95,50 +97,58 @@ class GameScene extends Phaser.Scene {
 
   spawnTarget() {
     const randomType = Math.random();
-    let texture = "apple";
+    let texture = "orange";
     let scoreChange = 1;
 
+    // Spawn golden orange occasionally (10% chance)
     if (randomType < 0.1) {
-      texture = "goldenApple";
+      texture = "goldenOrange";
       scoreChange = goldenOrangeBonus;
-    } else if (randomType > 0.9) {
-      texture = "rottenApple";
+    } 
+    // Spawn rotten orange less often (15% chance)
+    else if (randomType > 0.85) {
+      texture = "rottenOrange";
       scoreChange = rottenOrangePenalty;
     }
 
-    this.target = this.physics.add
+    const target = this.physics.add
       .image(this.getRandomX(), 0, texture)
       .setOrigin(0, 0);
-    this.target.setMaxVelocity(0, this.targetSpeed);
-    this.target.scoreChange = scoreChange;
-    this.physics.add.overlap(
-      this.target,
-      this.player,
-      this.targetHit,
-      null,
-      this
-    );
+    target.setMaxVelocity(0, this.targetSpeed);
+    target.scoreChange = scoreChange;
+    target.textureKey = texture;
+
+    this.physics.add.overlap(target, this.player, this.targetHit, null, this);
+
+    this.targets.push(target);
   }
 
   targetFallsOffScreen() {
-    if (this.target.y >= sizes.height) {
-      this.points = Math.max(0, this.points - 1);
-      this.textScore.setText(`Score: ${this.points}`);
-      this.showScorePopup(-1);
+    this.targets.forEach((target, index) => {
+      if (target.y >= sizes.height) {
+        // Only decrease score for regular oranges that fall off screen
+        if (target.textureKey === "orange") {
+          this.points = Math.max(0, this.points - 1);
+          this.textScore.setText(`Score: ${this.points}`);
+          this.showScorePopup(-1);
 
-      if (this.points === 0) {
-        this.gameOver();
+          // Game Over when score reaches zero
+          if (this.points === 0) {
+            this.gameOver();
+          }
+        }
+
+        target.destroy();
+        this.targets.splice(index, 1);
+        this.spawnTarget();
       }
-
-      this.target.destroy();
-      this.spawnTarget();
-    }
+    });
   }
 
   targetHit(target) {
     this.coinMusic.play();
 
-    if (target.texture.key === "goldenApple") {
+    if (target.textureKey === "goldenOrange") {
       this.timedEvent.delay += timeBoost * 1000;
     }
 
@@ -147,11 +157,17 @@ class GameScene extends Phaser.Scene {
     this.textScore.setText(`Score: ${this.points}`);
     this.showScorePopup(target.scoreChange);
 
+    // Level up logic when the player reaches a score multiple of `levelUpInterval`
     if (this.points % levelUpInterval === 0) {
       this.targetSpeed += speedIncreaseRate;
     }
 
+    // Remove the target from the array and destroy it
+    const index = this.targets.indexOf(target);
+    if (index !== -1) this.targets.splice(index, 1);
     target.destroy();
+
+    // Spawn a new target after the current one is hit
     this.spawnTarget();
   }
 
@@ -176,9 +192,9 @@ class GameScene extends Phaser.Scene {
   }
 
   gameOver() {
-    this.sys.game.destroy(true);
+    this.scene.pause();
     gameEndScoreSpan.textContent = this.points;
-    gameWinLoseSpan.textContent = this.points >= 10 ? "Win! " : "Lose! ";
+    gameWinLoseSpan.textContent = this.points >= 10 ? "Win!" : "Lose!";
     gameEndDiv.style.display = "flex";
   }
 }
