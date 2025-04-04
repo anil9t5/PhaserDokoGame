@@ -205,7 +205,7 @@ class GameScene extends Phaser.Scene {
   gameOver() {
     this.scene.pause();
     gameEndScoreSpan.textContent = this.points;
-    gameWinLoseSpan.textContent = this.points >= 20 ? "Win!" : "Lose!";
+    gameWinLoseSpan.textContent = this.points >= 15 ? "Win!" : "Lose!";
     gameEndDiv.style.display = "flex";
   }
 }
