@@ -5,9 +5,11 @@ const sizes = { width: 1200, height: 758 };
 const speedDown = 400;
 const speedIncreaseRate = 20;
 const levelUpInterval = 5;
-const goldenOrangeBonus = 3;
+const goldenOrangeBonus = 2;
 const rottenOrangePenalty = -2;
 const timeBoost = 3;
+const rottenOrangeChance = 0.3; // 30% chance to spawn after regular orange
+const followUpDelay = 300; // ms delay between regular and rotten orange
 
 const gameStartDiv = document.querySelector("#gameStartDiv");
 const gameStartBtn = document.querySelector("#gameStartBtn");
@@ -95,32 +97,38 @@ class GameScene extends Phaser.Scene {
     return Math.floor(Math.random() * sizes.width);
   }
 
-  spawnTarget() {
+  spawnTarget(isFollowUp = false, xPos = null) {
     const randomType = Math.random();
     let texture = "orange";
     let scoreChange = 1;
 
-    // Spawn golden orange occasionally (10% chance)
-    if (randomType < 0.1) {
-      texture = "goldenOrange";
-      scoreChange = goldenOrangeBonus;
-    } 
-    // Spawn rotten orange less often (15% chance)
-    else if (randomType > 0.85) {
+    if (isFollowUp) {
       texture = "rottenOrange";
       scoreChange = rottenOrangePenalty;
+    } else if (randomType < 0.1) {
+      texture = "goldenOrange";
+      scoreChange = goldenOrangeBonus;
     }
 
+    const spawnX = xPos !== null ? xPos : this.getRandomX();
     const target = this.physics.add
-      .image(this.getRandomX(), 0, texture)
+      .image(spawnX, 0, texture)
       .setOrigin(0, 0);
+    
     target.setMaxVelocity(0, this.targetSpeed);
     target.scoreChange = scoreChange;
     target.textureKey = texture;
+    target.isFollowUp = isFollowUp;
 
     this.physics.add.overlap(target, this.player, this.targetHit, null, this);
-
     this.targets.push(target);
+
+    // If this is a regular orange, chance to spawn rotten orange right after
+    if (!isFollowUp && texture === "orange" && Math.random() < rottenOrangeChance) {
+      this.time.delayedCall(followUpDelay, () => {
+        this.spawnTarget(true, spawnX);
+      });
+    }
   }
 
   targetFallsOffScreen() {
@@ -132,7 +140,6 @@ class GameScene extends Phaser.Scene {
           this.textScore.setText(`Score: ${this.points}`);
           this.showScorePopup(-1);
 
-          // Game Over when score reaches zero
           if (this.points === 0) {
             this.gameOver();
           }
@@ -140,7 +147,11 @@ class GameScene extends Phaser.Scene {
 
         target.destroy();
         this.targets.splice(index, 1);
-        this.spawnTarget();
+        
+        // Only spawn new target if this wasn't a follow-up rotten orange
+        if (!target.isFollowUp) {
+          this.spawnTarget();
+        }
       }
     });
   }
@@ -157,18 +168,18 @@ class GameScene extends Phaser.Scene {
     this.textScore.setText(`Score: ${this.points}`);
     this.showScorePopup(target.scoreChange);
 
-    // Level up logic when the player reaches a score multiple of `levelUpInterval`
     if (this.points % levelUpInterval === 0) {
       this.targetSpeed += speedIncreaseRate;
     }
 
-    // Remove the target from the array and destroy it
     const index = this.targets.indexOf(target);
     if (index !== -1) this.targets.splice(index, 1);
     target.destroy();
 
-    // Spawn a new target after the current one is hit
-    this.spawnTarget();
+    // Only spawn new target if this wasn't a follow-up rotten orange
+    if (!target.isFollowUp) {
+      this.spawnTarget();
+    }
   }
 
   showScorePopup(scoreChange) {
@@ -194,7 +205,7 @@ class GameScene extends Phaser.Scene {
   gameOver() {
     this.scene.pause();
     gameEndScoreSpan.textContent = this.points;
-    gameWinLoseSpan.textContent = this.points >= 10 ? "Win!" : "Lose!";
+    gameWinLoseSpan.textContent = this.points >= 20 ? "Win!" : "Lose!";
     gameEndDiv.style.display = "flex";
   }
 }
