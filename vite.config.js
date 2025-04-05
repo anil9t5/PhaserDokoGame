@@ -3,5 +3,5 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/PhaserDokoGame/', // <-- replace with your repo name
+  base: '/', // <-- replace with your repo name
 });
