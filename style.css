@@ -26,6 +26,10 @@ body {
   font-weight: 400;
   font-style: normal;
 }
+
+nav {
+  position: absolute;
+}
 ul {
   list-style-type: none;
   margin: 0;
