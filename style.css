@@ -52,8 +52,8 @@ a {
 header,
 footer {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   padding: 40px 20px;
 }
 
