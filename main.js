@@ -221,6 +221,10 @@ const config = {
       gravity: { y: speedDown },
     },
   },
+  scale: {
+    mode: Phaser.Scale.FIT, // <--- important
+    
+},
   scene: [GameScene],
 };
 
