@@ -1,62 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/assets/favicon.ico" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-  <meta name="google-adsense-account" content="ca-pub-3363434517820380">
-  <title>Mini games</title>
-  <script type="module" crossorigin src="/assets/index-82ab7f46.js"></script>
-  <link rel="stylesheet" href="/assets/index-8aa5cfb9.css">
-</head>
-
-<body>
-  <header>
-    <nav>
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/privacy-policy.html">Privacy policy</a></li>
-      </ul>
-    </nav>
-  </header>
-  <main>
-    <canvas id="gameCanvas"></canvas>
-
-    <div id="gameStartDiv" class="gameUI">
-      <h1>Orange Catcher</h1>
-      <p>You have 30 seconds to catch oranges!</p>
-      <p>If you catch more than 20 oranges you win.</p>
-      <p>If you catch less than 20 oranges you lose.</p>
-      <p>Avoid rotten oranges.</p>
-      <p>Use &larr; Right and &rarr; Left arrow keys to navigate.</p>
-      <p>Click the start button to begin</p>
-      <button id="gameStartBtn">
-        <p>start</p>
-      </button>
-      <p>Thank's for Dropping by <br> ©
-        <script>document.write(new Date().getFullYear())</script> 💖
-      </p>
-    </div>
-    <div id="gameEndDiv" class="gameUI">
-      <p>Game Over</p>
-      <h1>You <span id="gameWinLoseSpan"></span></h1>
-      <h1>Final Score: <span id="gameEndScoreSpan"></span></h1>
-      <p>Refresh the Page to play again</p>
-    </div>
-    </div>
-  </main>
-  <footer>
-
-  </footer>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Orange Catcher</title>
   
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3363434517820380"
-    crossorigin="anonymous"></script>
-</body>
+  <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-412269eb.js"></script>
+  <link rel="stylesheet" href="/assets/index-0378fc59.css">
+</head>
+<body>
+  <div id="gameCanvas"></div>
+  
+  <div id="gameStartDiv" class="gameUI">
+    <h1>Orange Catcher</h1>
+    <p>Catch the falling oranges!</p>
+    <button id="gameStartBtn">Start Game</button>
+  </div>
 
+  <div id="gameEndDiv" class="gameUI">
+    <h1>Game Over</h1>
+    <h2>You <span id="gameWinLoseSpan"></span></h2>
+    <h3>Score: <span id="gameEndScoreSpan"></span></h3>
+  </div>
+
+  <div id="orientationWarning" class="orientation-warning">
+    Please rotate your device to landscape mode for better experience
+  </div>
+
+  
+</body>
 </html>
