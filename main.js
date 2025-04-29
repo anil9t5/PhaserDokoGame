@@ -1,38 +1,22 @@
 import "./style.css";
 import Phaser from "phaser";
 
-const sizes = { width: 1200, height: 758 };
+// Game Constants - now using viewport-based sizing
+const baseWidth = window.innerWidth;
+const baseHeight = window.innerHeight;
 const speedDown = 400;
 const speedIncreaseRate = 20;
 const levelUpInterval = 5;
 const goldenOrangeBonus = 2;
 const rottenOrangePenalty = -2;
 const timeBoost = 3;
-const rottenOrangeChance = 0.3; // 30% chance to spawn after regular orange
-const followUpDelay = 300; // ms delay between regular and rotten orange
-
-const gameStartDiv = document.querySelector("#gameStartDiv");
-const gameStartBtn = document.querySelector("#gameStartBtn");
-const gameEndDiv = document.querySelector("#gameEndDiv");
-const gameWinLoseSpan = document.querySelector("#gameWinLoseSpan");
-const gameEndScoreSpan = document.querySelector("#gameEndScoreSpan");
-const gameCanvas = document.querySelector("#gameCanvas");
+const rottenOrangeChance = 0.3;
+const followUpDelay = 300;
 
 class GameScene extends Phaser.Scene {
   constructor() {
-    super("scene-game");
-    this.player;
-    this.cursor;
-    this.playerSpeed = speedDown + 50;
-    this.targetSpeed = speedDown;
-    this.points = 0;
-    this.textScore;
-    this.textTime;
-    this.timedEvent;
-    this.remainingTime;
-    this.coinMusic;
-    this.bgMusic;
-    this.targets = [];
+    super({ key: "GameScene" });
+    this.scaleFactor = Math.min(window.innerWidth / 1200, window.innerHeight / 758);
   }
 
   preload() {
@@ -46,55 +30,94 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.scene.pause("scene-game");
-    this.add.image(0, 0, "bg").setOrigin(0, 0);
+    // Hide start screen
+    document.getElementById("gameStartDiv").style.display = "none";
+    
+    // Background
+    this.bg = this.add.image(0, 0, "bg").setOrigin(0, 0);
+    this.bg.setDisplaySize(this.scale.width, this.scale.height);
 
-    this.player = this.physics.add
-      .image(sizes.width / 2, sizes.height - 100, "basket")
-      .setOrigin(0.5, 0);
+    // Player
+    this.player = this.physics.add.image(
+      this.scale.width / 2,
+      this.scale.height - 100 * this.scaleFactor,
+      "basket"
+    ).setOrigin(0.5, 0);
     this.player.setImmovable(true);
     this.player.body.allowGravity = false;
     this.player.setCollideWorldBounds(true);
+    this.player.setScale(this.scaleFactor);
 
+    // Controls - both touch and keyboard
     this.cursor = this.input.keyboard.createCursorKeys();
+    this.setupTouchControls();
 
-    this.textScore = this.add.text(sizes.width - 120, 10, "Score: 0", {
-      font: "25px Chewy",
-      fill: "#ffffff",
-    });
-    this.textTime = this.add.text(10, 10, "Remaining Time: 30", {
-      font: "25px Chewy",
-      fill: "#ffffff",
-    });
+    // UI Elements with responsive sizing
+    this.textScore = this.add.text(
+      this.scale.width - 120 * this.scaleFactor,
+      10 * this.scaleFactor,
+      "Score: 0",
+      { font: `${25 * this.scaleFactor}px Chewy`, fill: "#ffffff" }
+    );
+    
+    this.textTime = this.add.text(
+      10 * this.scaleFactor,
+      10 * this.scaleFactor,
+      "Remaining Time: 30",
+      { font: `${25 * this.scaleFactor}px Chewy`, fill: "#ffffff" }
+    );
 
+    // Game timer (30 seconds)
     this.timedEvent = this.time.delayedCall(30000, this.gameOver, [], this);
 
+    // Audio
     this.coinMusic = this.sound.add("coin");
-    this.bgMusic = this.sound.add("bgMusic");
+    this.bgMusic = this.sound.add("bgMusic", { loop: true });
     this.bgMusic.play();
 
+    // Game state
+    this.points = 0;
+    this.targetSpeed = speedDown * this.scaleFactor;
+    this.playerSpeed = (speedDown + 50) * this.scaleFactor;
+    this.targets = [];
+    
+    // Start spawning targets
     this.spawnTarget();
   }
 
-  update() {
+  setupTouchControls() {
+    // Left side of screen moves left, right side moves right
+    this.input.on('pointerdown', (pointer) => {
+      if (pointer.x < this.scale.width / 2) {
+        this.player.setVelocityX(-this.playerSpeed);
+      } else {
+        this.player.setVelocityX(this.playerSpeed);
+      }
+    });
+    
+    // Stop when touch ends
+    this.input.on('pointerup', () => {
+      this.player.setVelocityX(0);
+    });
+  }
+
+  update(time, delta) {
+    // Keyboard controls (still works alongside touch)
     const { left, right } = this.cursor;
-
-    this.targetFallsOffScreen();
-
     if (left.isDown) {
       this.player.setVelocityX(-this.playerSpeed);
     } else if (right.isDown) {
       this.player.setVelocityX(this.playerSpeed);
-    } else {
-      this.player.setVelocityX(0);
     }
 
+    // Move targets
+    this.targets.forEach(target => {
+      target.y += (this.targetSpeed * delta) / 1000;
+    });
+
+    this.targetFallsOffScreen();
     this.remainingTime = this.timedEvent.getRemainingSeconds();
     this.textTime.setText(`Remaining Time: ${Math.round(this.remainingTime)}`);
-  }
-
-  getRandomX() {
-    return Math.floor(Math.random() * sizes.width);
   }
 
   spawnTarget(isFollowUp = false, xPos = null) {
@@ -110,10 +133,10 @@ class GameScene extends Phaser.Scene {
       scoreChange = goldenOrangeBonus;
     }
 
-    const spawnX = xPos !== null ? xPos : this.getRandomX();
-    const target = this.physics.add
-      .image(spawnX, 0, texture)
-      .setOrigin(0, 0);
+    const spawnX = xPos !== null ? xPos : Phaser.Math.Between(50, this.scale.width - 50);
+    const target = this.physics.add.image(spawnX, 0, texture)
+      .setOrigin(0, 0)
+      .setScale(this.scaleFactor);
     
     target.setMaxVelocity(0, this.targetSpeed);
     target.scoreChange = scoreChange;
@@ -123,7 +146,6 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(target, this.player, this.targetHit, null, this);
     this.targets.push(target);
 
-    // If this is a regular orange, chance to spawn rotten orange right after
     if (!isFollowUp && texture === "orange" && Math.random() < rottenOrangeChance) {
       this.time.delayedCall(followUpDelay, () => {
         this.spawnTarget(true, spawnX);
@@ -132,28 +154,17 @@ class GameScene extends Phaser.Scene {
   }
 
   targetFallsOffScreen() {
-    this.targets.forEach((target, index) => {
-      if (target.y >= sizes.height) {
-        // Only decrease score for regular oranges that fall off screen
+    for (let i = this.targets.length - 1; i >= 0; i--) {
+      const target = this.targets[i];
+      if (target.y >= this.scale.height) {
         if (target.textureKey === "orange") {
-          this.points = Math.max(0, this.points - 1);
-          this.textScore.setText(`Score: ${this.points}`);
-          this.showScorePopup(-1);
-
-          if (this.points === 0) {
-            this.gameOver();
-          }
+          this.updateScore(-1);
         }
-
         target.destroy();
-        this.targets.splice(index, 1);
-        
-        // Only spawn new target if this wasn't a follow-up rotten orange
-        if (!target.isFollowUp) {
-          this.spawnTarget();
-        }
+        this.targets.splice(i, 1);
+        if (!target.isFollowUp) this.spawnTarget();
       }
-    });
+    }
   }
 
   targetHit(target) {
@@ -163,74 +174,95 @@ class GameScene extends Phaser.Scene {
       this.timedEvent.delay += timeBoost * 1000;
     }
 
-    this.points += target.scoreChange;
-    this.points = Math.max(0, this.points);
-    this.textScore.setText(`Score: ${this.points}`);
-    this.showScorePopup(target.scoreChange);
+    this.updateScore(target.scoreChange);
 
     if (this.points % levelUpInterval === 0) {
-      this.targetSpeed += speedIncreaseRate;
+      this.targetSpeed += speedIncreaseRate * this.scaleFactor;
     }
 
     const index = this.targets.indexOf(target);
     if (index !== -1) this.targets.splice(index, 1);
     target.destroy();
 
-    // Only spawn new target if this wasn't a follow-up rotten orange
-    if (!target.isFollowUp) {
-      this.spawnTarget();
-    }
+    if (!target.isFollowUp) this.spawnTarget();
+  }
+
+  updateScore(change) {
+    this.points = Math.max(0, this.points + change);
+    this.textScore.setText(`Score: ${this.points}`);
   }
 
   showScorePopup(scoreChange) {
-    const color = scoreChange > 0 ? "#00ff00" : "#ff0000";
     const text = this.add.text(
-      this.player.x + 30,
-      this.player.y - 20,
+      this.player.x + 30 * this.scaleFactor,
+      this.player.y - 20 * this.scaleFactor,
       `${scoreChange > 0 ? "+" : ""}${scoreChange}`,
       {
-        font: "25px Chewy",
-        fill: color,
+        font: `${25 * this.scaleFactor}px Chewy`,
+        fill: scoreChange > 0 ? "#00ff00" : "#ff0000"
       }
     );
     this.tweens.add({
       targets: text,
-      y: text.y - 50,
+      y: text.y - 50 * this.scaleFactor,
       alpha: 0,
       duration: 1000,
-      onComplete: () => text.destroy(),
+      onComplete: () => text.destroy()
     });
   }
 
   gameOver() {
     this.scene.pause();
-    gameEndScoreSpan.textContent = this.points;
-    gameWinLoseSpan.textContent = this.points >= 20 ? "Win!" : "Lose!";
-    gameEndDiv.style.display = "flex";
+    document.getElementById("gameEndScoreSpan").textContent = this.points;
+    document.getElementById("gameWinLoseSpan").textContent = this.points >= 20 ? "Win!" : "Lose!";
+    document.getElementById("gameEndDiv").style.display = "flex";
+    this.bgMusic.stop();
   }
 }
 
+// Game configuration for mobile
 const config = {
-  type: Phaser.WEBGL,
-  width: sizes.width,
-  height: sizes.height,
-  canvas: gameCanvas,
+  type: Phaser.AUTO,
+  parent: "gameCanvas",
+  width: baseWidth,
+  height: baseHeight,
   physics: {
     default: "arcade",
     arcade: {
       gravity: { y: speedDown },
-    },
+      debug: false
+    }
   },
-  scale: {
-    mode: Phaser.Scale.FIT, // <--- important
-    
-},
   scene: [GameScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  dom: {
+    createContainer: true
+  },
+  render: {
+    pixelArt: false,
+    antialias: true,
+    roundPixels: true
+  }
 };
 
+// Create game instance
 const game = new Phaser.Game(config);
 
-gameStartBtn.addEventListener("click", () => {
-  gameStartDiv.style.display = "none";
-  game.scene.resume("scene-game");
+// Start button handler
+document.getElementById("gameStartBtn").addEventListener("click", () => {
+  document.getElementById("gameStartDiv").style.display = "none";
+  game.scene.start("GameScene");
+});
+
+// Handle orientation changes
+window.addEventListener("orientationchange", () => {
+  const warning = document.getElementById("orientationWarning");
+  if (window.innerHeight > window.innerWidth) {
+    warning.style.display = "flex";
+  } else {
+    warning.style.display = "none";
+  }
 });
